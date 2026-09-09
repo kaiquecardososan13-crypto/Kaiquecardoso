@@ -1,4 +1,4 @@
-name: PC Windows - Preparação
+name: Teste PC Windows
 
 on:
   workflow_dispatch:
@@ -8,39 +8,30 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Preparar PC
+      - name: Informações de conexão
         shell: powershell
         run: |
           Write-Host "===== PC WINDOWS ====="
 
-          $info = Get-ComputerInfo
-          Write-Host "Windows: $($info.WindowsProductName)"
-          Write-Host "Versão: $($info.WindowsVersion)"
-          Write-Host "Arquitetura: $($info.OsArchitecture)"
-
-          $cpu = Get-CimInstance Win32_Processor
-          Write-Host "CPU: $($cpu.Name)"
-          Write-Host "Núcleos disponíveis: $($cpu.NumberOfLogicalProcessors)"
-
-          $ram = Get-CimInstance Win32_ComputerSystem
-          Write-Host ("RAM: {0:N2} GB" -f ($ram.TotalPhysicalMemory / 1GB))
-
-      - name: Verificar RDP
-        shell: powershell
-        run: |
-          Write-Host "===== RDP ====="
-
-          $service = Get-Service TermService -ErrorAction SilentlyContinue
-
-          if ($service) {
-            Write-Host "Serviço RDP encontrado: $($service.Status)"
-          } else {
-            Write-Host "Serviço RDP não disponível neste ambiente."
-          }
-
-      - name: Finalizar
-        shell: powershell
-        run: |
           Write-Host ""
-          Write-Host "PC de teste preparado!"
-          Write-Host "Este runner é permanente pelo GitHub."
+          Write-Host "Nome da máquina:"
+          hostname
+
+          Write-Host ""
+          Write-Host "Endereços IPv4:"
+          Get-NetIPAddress -AddressFamily IPv4 |
+            Where-Object {$_.IPAddress -notlike "127.*"} |
+            Select-Object InterfaceAlias, IPAddress
+
+          Write-Host ""
+          Write-Host "RDP:"
+          Get-Service TermService |
+            Select-Object Name, Status
+
+          Write-Host ""
+          Write-Host "Porta RDP:"
+          Get-NetTCPConnection -LocalPort 3389 -ErrorAction SilentlyContinue |
+            Select-Object LocalAddress, LocalPort, State
+
+          Write-Host ""
+          Write-Host "===== FIM DO TESTE ====="
